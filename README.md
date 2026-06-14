@@ -2,6 +2,13 @@
 
 森系涂鸦风鸟类智能体：FastAPI + ModelScope/OpenAI-compatible tool calling + Wikipedia + Xeno-canto + 本地观鸟日记。
 
+![alt text](image.png)
+
+![alt text](image-1.png)
+
+![alt text](image-2.png)
+
+![alt text](image-3.png)
 ## Install
 
 ```bash

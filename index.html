@@ -15,13 +15,15 @@
     }
 
     :root {
-      --paper: #fcfaf2;
-      --forest: #2d4a22;
-      --bark: #7d522e;
-      --autumn: #e0a96d;
-      --ink: #2d3e2d;
-      --soft-leaf: rgba(45, 74, 34, 0.1);
-      --warm-page: rgba(252, 250, 242, 0.88);
+      --paper: #f7faee;
+      --forest: #1f5a2b;
+      --deep-forest: #173f24;
+      --moss: #6c8f45;
+      --bark: #6f4d28;
+      --autumn: #dca75e;
+      --ink: #213d27;
+      --soft-leaf: rgba(31, 90, 43, 0.14);
+      --warm-page: rgba(250, 253, 241, 0.9);
       font-family: "FZShouJinShu", "FangZheng ShouJinShu", "STKaiti", "KaiTi", "Microsoft YaHei", cursive;
     }
 
@@ -33,12 +35,14 @@
       margin: 0;
       color: var(--ink);
       font-family: "FZShouJinShu", "FangZheng ShouJinShu", "STKaiti", "KaiTi", "Microsoft YaHei", cursive;
+      overflow: hidden;
       background:
-        linear-gradient(rgba(45, 74, 34, 0.045) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(45, 74, 34, 0.035) 1px, transparent 1px),
-        linear-gradient(transparent 31px, rgba(125, 82, 46, 0.08) 32px),
+        radial-gradient(circle at 12% 18%, rgba(108, 143, 69, 0.12), transparent 28%),
+        linear-gradient(rgba(31, 90, 43, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(31, 90, 43, 0.05) 1px, transparent 1px),
+        linear-gradient(transparent 31px, rgba(31, 90, 43, 0.08) 32px),
         var(--paper);
-      background-size: 28px 28px, 28px 28px, 100% 32px, auto;
+      background-size: auto, 28px 28px, 28px 28px, 100% 32px, auto;
       min-width: 0;
     }
 
@@ -51,6 +55,7 @@
     .message,
     .sound-card,
     #soundMeta,
+    #openDiaryModal,
     .diary-entry span,
     .diary-entry time {
       font-family: "Architects Daughter", "FZShouJinShu", cursive;
@@ -59,19 +64,48 @@
     .page-shell {
       display: grid;
       grid-template-columns: minmax(320px, 0.95fr) minmax(360px, 1.05fr);
-      gap: 24px;
+      gap: 16px;
       width: min(1440px, 100%);
-      min-height: 100vh;
+      height: calc(100vh - 112px);
       margin: 0 auto;
-      padding: 24px;
+      padding: 0 18px 16px;
+      overflow: hidden;
+    }
+
+    .page-title {
+      height: 112px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 12px 18px 8px;
+    }
+
+    .page-title h1 {
+      margin: 0;
+      color: var(--deep-forest);
+      font-family: "Architects Daughter", "FZShouJinShu", cursive;
+      font-size: clamp(2.2rem, 5vw, 4.4rem);
+      line-height: 0.95;
+      letter-spacing: 0;
+      text-shadow: 2px 2px 0 rgba(108, 143, 69, 0.18);
+    }
+
+    .page-title p {
+      margin: 8px 0 0;
+      color: var(--forest);
+      font-size: clamp(0.95rem, 1.8vw, 1.25rem);
     }
 
     .notebook-panel,
     .chat-panel {
       display: flex;
+      height: 100%;
       min-width: 0;
+      min-height: 0;
       flex-direction: column;
-      gap: 18px;
+      gap: 12px;
+      overflow: auto;
+      padding: 4px 4px 8px;
     }
 
     .doodle-box,
@@ -83,26 +117,17 @@
       box-shadow: 4px 5px 0 rgba(45, 62, 45, 0.12);
     }
 
-    .brand-block {
-      padding: 4px 6px 0;
-    }
-
-    .brand-block h1,
     .chat-panel h2,
     .daily-card h2,
     .diary-card h2,
-    .diary-form h2 {
-      margin: 0 0 8px;
+    .diary-modal h2 {
+      margin: 0 0 5px;
       color: var(--forest);
       line-height: 1.18;
     }
 
-    .brand-block h1 {
-      font-size: clamp(2rem, 5vw, 3.5rem);
-    }
-
     .eyebrow {
-      margin: 0 0 6px;
+      margin: 0 0 4px;
       color: var(--bark);
       letter-spacing: 0;
     }
@@ -110,23 +135,39 @@
     .daily-card,
     .sound-card,
     .diary-card,
-    .diary-form,
+    .diary-modal,
     .chat-panel {
       background: var(--warm-page);
-      padding: 18px;
+      padding: 14px;
     }
 
     .daily-card {
       display: grid;
-      grid-template-columns: 1fr minmax(120px, 210px);
-      gap: 16px;
-      align-items: center;
+      grid-template-columns: 1fr minmax(118px, 180px);
+      gap: 12px;
+      align-items: stretch;
     }
 
     #birdSummary,
     .diary-entry p,
     .message {
       line-height: 1.65;
+    }
+
+    #birdSummary {
+      margin: 8px 0 0;
+      display: block;
+    }
+
+    .daily-copy {
+      max-height: 168px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .bird-visual {
+      position: relative;
+      min-height: 120px;
     }
 
     #birdImage {
@@ -136,6 +177,24 @@
       border: 2px solid var(--ink);
       border-radius: 40% 55% 45% 50% / 45% 40% 55% 50%;
       background: var(--soft-leaf);
+    }
+
+    .bird-placeholder {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      border: 2px dashed var(--moss);
+      border-radius: 45% 55% 42% 58% / 52% 44% 56% 48%;
+      color: var(--forest);
+      background: rgba(108, 143, 69, 0.08);
+    }
+
+    .bird-placeholder::before {
+      content: "⌒(•ө•)⌒";
+      font-family: "Architects Daughter", "FZShouJinShu", cursive;
+      font-size: 1.8rem;
+      transform: rotate(-8deg);
     }
 
     .sound-card {
@@ -149,22 +208,54 @@
     }
 
     .diary-card {
-      min-height: 180px;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .diary-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    #openDiaryModal {
+      flex: 0 0 auto;
+      padding: 7px 11px;
+      background: rgba(184, 209, 111, 0.92);
+      font-size: 0.95rem;
     }
 
     .diary-list {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
       display: grid;
-      gap: 12px;
-      max-height: 240px;
-      overflow: auto;
-      padding-right: 4px;
     }
 
     .diary-entry {
-      padding: 12px;
-      background: linear-gradient(transparent 92%, rgba(224, 169, 109, 0.34) 92%);
-      background-size: 100% 28px;
-      border-left: 4px solid var(--autumn);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(120px, 38%);
+      gap: 16px;
+      height: 100%;
+      min-height: 0;
+      padding: 14px;
+      border-left: 4px dashed var(--autumn);
+      background: repeating-linear-gradient(
+        transparent 0 30px,
+        rgba(224, 169, 109, 0.28) 31px,
+        transparent 32px
+      );
+      overflow: hidden;
+    }
+
+    .diary-copy {
+      min-width: 0;
+      overflow: auto;
+      padding-right: 4px;
     }
 
     .diary-entry strong,
@@ -181,32 +272,85 @@
 
     .diary-entry p {
       margin: 8px 0 0;
+      line-height: 2;
       overflow-wrap: anywhere;
     }
 
-    .diary-form {
+    .diary-thumb {
+      width: 100%;
+      height: 100%;
+      min-height: 140px;
+      object-fit: cover;
+      border: 2px solid var(--ink);
+      border-radius: 28px 18px 24px 16px / 16px 26px 18px 28px;
+      background: var(--soft-leaf);
+    }
+
+    .diary-image-placeholder {
+      display: grid;
+      place-items: center;
+      min-height: 140px;
+      border: 2px dashed var(--moss);
+      border-radius: 32px 18px 28px 20px / 20px 30px 18px 28px;
+      background: rgba(108, 143, 69, 0.08);
+      color: var(--forest);
+    }
+
+    .diary-image-placeholder::before {
+      content: "bird notes";
+      font-family: "Architects Daughter", "FZShouJinShu", cursive;
+      transform: rotate(-8deg);
+    }
+
+    .diary-pager {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding-top: 10px;
+    }
+
+    .diary-pager button {
+      padding: 6px 10px;
+    }
+
+    .diary-pager button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+      transform: none;
+    }
+
+    .diary-modal {
       display: grid;
       gap: 10px;
+      position: relative;
+      width: min(520px, calc(100vw - 28px));
+      max-height: calc(100vh - 48px);
+      overflow: auto;
     }
 
     input,
     textarea {
       width: 100%;
-      padding: 11px 13px;
+      padding: 8px 11px;
       background: rgba(255, 255, 255, 0.56);
       color: var(--ink);
       font-size: 1rem;
     }
 
     textarea {
-      min-height: 92px;
+      min-height: 64px;
       resize: vertical;
+    }
+
+    input[type="file"] {
+      padding: 7px 10px;
     }
 
     button {
       cursor: pointer;
-      padding: 11px 16px;
-      background: var(--autumn);
+      padding: 9px 14px;
+      background: #b8d16f;
       color: var(--ink);
       font-weight: 700;
     }
@@ -214,7 +358,7 @@
     button:hover,
     button:focus-visible {
       transform: translateY(-1px) rotate(-0.4deg);
-      background: #edbb7d;
+      background: #d5e88b;
     }
 
     input:focus,
@@ -225,20 +369,20 @@
     }
 
     .chat-panel {
-      min-height: calc(100vh - 48px);
+      min-height: 0;
     }
 
     .tool-traces {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      min-height: 32px;
+      min-height: 28px;
     }
 
     .tool-tag {
       padding: 6px 10px;
-      background: rgba(224, 169, 109, 0.35);
-      border: 2px dashed var(--bark);
+      background: rgba(108, 143, 69, 0.22);
+      border: 2px dashed var(--forest);
       border-radius: 18px 12px 20px 10px / 10px 20px 12px 18px;
     }
 
@@ -246,15 +390,15 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      min-height: 340px;
+      gap: 10px;
+      min-height: 0;
       overflow: auto;
       padding: 6px;
     }
 
     .message {
       max-width: 82%;
-      padding: 12px 14px;
+      padding: 9px 12px;
       border: 2px solid var(--ink);
       background: rgba(255, 255, 255, 0.55);
       border-radius: 22px 18px 26px 14px / 16px 24px 14px 26px;
@@ -264,7 +408,7 @@
 
     .message.user {
       align-self: flex-end;
-      background: rgba(45, 74, 34, 0.12);
+      background: rgba(31, 90, 43, 0.14);
     }
 
     .message.assistant {
@@ -288,10 +432,156 @@
       font-weight: 700;
     }
 
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(23, 63, 36, 0.2);
+      backdrop-filter: blur(2px);
+    }
+
+    .modal-backdrop[hidden] {
+      display: none;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+
+    .diary-preview {
+      width: min(220px, 100%);
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      justify-self: center;
+      border: 2px dashed var(--forest);
+      border-radius: 30px 20px 28px 18px / 18px 30px 20px 28px;
+      background: var(--soft-leaf);
+    }
+
+    .bird-card {
+      position: relative;
+      overflow: visible;
+    }
+
+    .bird-card::before,
+    .bird-card::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .bird-card::before {
+      top: -12px;
+      right: 24px;
+      width: 34px;
+      height: 22px;
+      border: 2px solid var(--ink);
+      border-radius: 58% 42% 54% 46% / 58% 44% 56% 42%;
+      background: rgba(184, 209, 111, 0.88);
+      transform: rotate(-7deg);
+      box-shadow: 2px 3px 0 rgba(33, 61, 39, 0.12);
+    }
+
+    .bird-card::after {
+      top: -5px;
+      right: 18px;
+      width: 10px;
+      height: 10px;
+      border-top: 2px solid var(--ink);
+      border-right: 2px solid var(--ink);
+      transform: rotate(42deg);
+    }
+
+    .bird-card[data-bird="thrush"]::before {
+      right: auto;
+      left: 26px;
+      background: rgba(108, 143, 69, 0.9);
+      transform: rotate(9deg);
+    }
+
+    .bird-card[data-bird="thrush"]::after {
+      right: auto;
+      left: 54px;
+      transform: rotate(34deg);
+    }
+
+    .bird-card[data-bird="egret"]::before {
+      width: 28px;
+      height: 30px;
+      right: 34px;
+      background: rgba(250, 253, 241, 0.95);
+      border-radius: 52% 48% 62% 38% / 46% 42% 58% 54%;
+      transform: rotate(12deg);
+    }
+
+    .bird-card[data-bird="swallow"]::before {
+      width: 38px;
+      height: 18px;
+      right: auto;
+      left: 36px;
+      background: rgba(31, 90, 43, 0.76);
+      border-radius: 70% 30% 68% 32% / 54% 42% 58% 46%;
+      transform: rotate(-14deg);
+    }
+
+    .bird-card[data-bird="swallow"]::after {
+      right: auto;
+      left: 64px;
+      border-color: var(--ink);
+      transform: rotate(22deg);
+    }
+
+    .bird-card[data-bird="owl"]::before {
+      top: -16px;
+      right: 32px;
+      width: 36px;
+      height: 32px;
+      background:
+        radial-gradient(circle at 35% 38%, var(--paper) 0 3px, transparent 4px),
+        radial-gradient(circle at 65% 38%, var(--paper) 0 3px, transparent 4px),
+        rgba(108, 143, 69, 0.88);
+      border-radius: 42% 58% 44% 56% / 50% 48% 52% 50%;
+      transform: rotate(3deg);
+    }
+
+    .bird-card[data-bird="owl"]::after {
+      top: -18px;
+      right: 53px;
+      width: 20px;
+      height: 14px;
+      border: 2px solid var(--ink);
+      border-bottom: 0;
+      border-left: 0;
+      transform: rotate(-44deg);
+    }
+
     @media (max-width: 860px) {
+      body {
+        overflow: auto;
+      }
+
       .page-shell {
         grid-template-columns: 1fr;
         padding: 14px;
+        height: auto;
+        overflow: visible;
+      }
+
+      .page-title {
+        height: auto;
       }
 
       .daily-card {
@@ -313,43 +603,47 @@
   </style>
 </head>
 <body>
+  <header class="page-title">
+    <div>
+      <h1>The Verdant Oracle Aviary</h1>
+      <p>森系鸟鸣手帐 · 林间占卜智能体</p>
+    </div>
+  </header>
+
   <main class="page-shell">
     <section class="notebook-panel">
-      <header class="brand-block">
-        <p class="eyebrow">Forest Doodle Bird Agent</p>
-        <h1>森系涂鸦风鸟类智能体</h1>
-      </header>
-
-      <article class="daily-card doodle-box">
-        <div>
+      <article class="daily-card doodle-box bird-card" data-bird="cuckoo">
+        <div class="daily-copy">
           <p class="eyebrow">每日一鸟</p>
           <h2 id="birdTitle">布谷鸟</h2>
           <p id="birdSummary">不用急，好运在路上。问问林间占卜师，听一声鸟鸣吧。</p>
         </div>
-        <img id="birdImage" alt="鸟类图片" src="" hidden>
+        <div class="bird-visual">
+          <img id="birdImage" alt="鸟类图片" src="" hidden>
+          <div id="birdPlaceholder" class="bird-placeholder" aria-label="手绘鸟占位图"></div>
+        </div>
       </article>
 
-      <div class="sound-card doodle-box">
+      <div class="sound-card doodle-box bird-card" data-bird="thrush">
         <span id="soundMeta">鸟鸣播放器正在等一阵风。</span>
         <audio id="birdAudio" controls></audio>
       </div>
 
-      <section class="diary-card doodle-box">
-        <h2>观鸟日记本</h2>
+      <section class="diary-card doodle-box bird-card" data-bird="egret">
+        <div class="diary-card-header">
+          <h2>观鸟日记本</h2>
+          <button id="openDiaryModal" type="button">开始写日记</button>
+        </div>
         <div id="diaryList" class="diary-list"></div>
+        <div class="diary-pager" aria-label="观鸟日记翻页">
+          <button id="prevDiary" type="button">上一页</button>
+          <span id="diaryPageLabel">0 / 0</span>
+          <button id="nextDiary" type="button">下一页</button>
+        </div>
       </section>
-
-      <form id="diaryForm" class="diary-form doodle-box">
-        <h2>记录一次相遇</h2>
-        <input name="bird_name" placeholder="鸟名，例如：白鹭" required>
-        <input name="spot_time" placeholder="时间，例如：清晨 7:30" required>
-        <input name="location" placeholder="地点，例如：校园湖边" required>
-        <textarea name="description" placeholder="它在做什么？你当时感觉如何？" required></textarea>
-        <button type="submit">写进手帐</button>
-      </form>
     </section>
 
-    <section class="chat-panel doodle-box">
+    <section class="chat-panel doodle-box bird-card" data-bird="owl">
       <header>
         <p class="eyebrow">林间对话框</p>
         <h2>林间魔法占卜师</h2>
@@ -363,16 +657,51 @@
     </section>
   </main>
 
+  <div id="diaryModal" class="modal-backdrop" hidden>
+    <form id="diaryForm" class="diary-modal doodle-box bird-card" data-bird="swallow">
+      <button id="closeDiaryModal" class="modal-close" type="button" aria-label="关闭">×</button>
+      <h2>记录一次相遇</h2>
+      <input name="bird_name" placeholder="鸟名，例如：白鹭" required>
+      <input name="spot_time" placeholder="时间，例如：清晨 7:30" required>
+      <input name="location" placeholder="地点，例如：校园湖边" required>
+      <textarea name="description" placeholder="它在做什么？你当时感觉如何？" required></textarea>
+      <input id="diaryImage" name="image" type="file" accept="image/*">
+      <img id="diaryPreview" class="diary-preview" alt="日记图片预览" hidden>
+      <button type="submit">写进手帐</button>
+    </form>
+  </div>
+
   <script>
     const state = {
       history: [],
       diaries: [],
+      diaryPage: 0,
     };
 
     const chatLog = document.querySelector("#chatLog");
     const toolTraces = document.querySelector("#toolTraces");
     const diaryList = document.querySelector("#diaryList");
     const birdAudio = document.querySelector("#birdAudio");
+    const birdImage = document.querySelector("#birdImage");
+    const birdPlaceholder = document.querySelector("#birdPlaceholder");
+    const soundMeta = document.querySelector("#soundMeta");
+    const diaryModal = document.querySelector("#diaryModal");
+    const diaryForm = document.querySelector("#diaryForm");
+    const diaryImage = document.querySelector("#diaryImage");
+    const diaryPreview = document.querySelector("#diaryPreview");
+    const openDiaryModalButton = document.querySelector("#openDiaryModal");
+    const closeDiaryModalButton = document.querySelector("#closeDiaryModal");
+    const prevDiaryButton = document.querySelector("#prevDiary");
+    const nextDiaryButton = document.querySelector("#nextDiary");
+    const diaryPageLabel = document.querySelector("#diaryPageLabel");
+
+    birdImage.addEventListener("error", () => {
+      showBirdPlaceholder("图片链接没有加载成功，先用手绘鸟占位。");
+    });
+
+    birdAudio.addEventListener("error", () => {
+      soundMeta.textContent = "这段鸟鸣链接暂时无法播放，换一只鸟试试吧。";
+    });
 
     function setStatus(container, className, message) {
       container.textContent = "";
@@ -382,13 +711,29 @@
       container.appendChild(note);
     }
 
-    function addMessage(role, content) {
-      state.history.push({ role, content });
+    function createMessageBubble(role, content = "") {
       const bubble = document.createElement("div");
       bubble.className = `message ${role}`;
       bubble.textContent = content;
       chatLog.appendChild(bubble);
       chatLog.scrollTop = chatLog.scrollHeight;
+      return bubble;
+    }
+
+    function addMessage(role, content) {
+      state.history.push({ role, content });
+      createMessageBubble(role, content);
+    }
+
+    async function addAssistantMessageTypewriter(content) {
+      const safeContent = content || "林间风声有点轻，我刚刚没听清。";
+      state.history.push({ role: "assistant", content: safeContent });
+      const bubble = createMessageBubble("assistant");
+      for (const char of safeContent) {
+        bubble.textContent += char;
+        chatLog.scrollTop = chatLog.scrollHeight;
+        await new Promise((resolve) => setTimeout(resolve, 22));
+      }
     }
 
     function renderToolTraces(labels) {
@@ -401,55 +746,127 @@
       });
     }
 
-    function renderDiaries(diaries) {
-      state.diaries = Array.isArray(diaries) ? diaries : [];
-      diaryList.textContent = "";
+    function renderDiaries(diaries, showNewest = false) {
+      state.diaries = Array.isArray(diaries) ? diaries.slice().reverse() : [];
+      if (showNewest) {
+        state.diaryPage = 0;
+      } else {
+        state.diaryPage = Math.min(state.diaryPage || 0, Math.max(state.diaries.length - 1, 0));
+      }
+      renderDiaryPage();
+    }
 
-      if (!state.diaries.length) {
+    function renderDiaryPage() {
+      diaryList.textContent = "";
+      const total = state.diaries.length;
+      diaryPageLabel.textContent = total ? `${state.diaryPage + 1} / ${total}` : "0 / 0";
+      prevDiaryButton.disabled = state.diaryPage <= 0;
+      nextDiaryButton.disabled = state.diaryPage >= total - 1;
+
+      if (!total) {
         setStatus(diaryList, "empty", "今天还没有鸟儿落在纸页上。");
         return;
       }
 
-      state.diaries.slice().reverse().forEach((entry) => {
-        const card = document.createElement("article");
-        card.className = "diary-entry";
+      const entry = state.diaries[state.diaryPage];
+      const card = document.createElement("article");
+      card.className = "diary-entry";
 
-        const birdName = document.createElement("strong");
-        birdName.textContent = entry.bird_name || "未命名的鸟";
+      const copy = document.createElement("div");
+      copy.className = "diary-copy";
 
-        const meta = document.createElement("time");
-        meta.textContent = `${entry.spot_time || "未知时间"} · ${entry.location || "未知地点"}`;
+      const birdName = document.createElement("strong");
+      birdName.textContent = entry.bird_name || "未命名的鸟";
 
-        const description = document.createElement("p");
-        description.textContent = entry.description || "这次相遇还没有描述。";
+      const meta = document.createElement("time");
+      meta.textContent = `${entry.spot_time || "未知时间"} · ${entry.location || "未知地点"}`;
 
-        card.append(birdName, meta, description);
-        diaryList.appendChild(card);
-      });
+      const description = document.createElement("p");
+      description.textContent = entry.description || "这次相遇还没有描述。";
+      copy.append(birdName, meta, description);
+
+      if (entry.image_url) {
+        const image = document.createElement("img");
+        image.className = "diary-thumb";
+        image.src = entry.image_url;
+        image.alt = `${entry.bird_name || "鸟"} 的观鸟照片`;
+        card.append(copy, image);
+      } else {
+        const placeholder = document.createElement("div");
+        placeholder.className = "diary-image-placeholder";
+        card.append(copy, placeholder);
+      }
+
+      diaryList.appendChild(card);
+    }
+
+    function resetDiaryModal() {
+      diaryForm.reset();
+      diaryPreview.removeAttribute("src");
+      diaryPreview.hidden = true;
+    }
+
+    function openDiaryModal() {
+      diaryModal.hidden = false;
+      diaryForm.querySelector("input[name='bird_name']").focus();
+    }
+
+    function closeDiaryModal() {
+      diaryModal.hidden = true;
+      resetDiaryModal();
+    }
+
+    function showBirdPlaceholder(message = "手绘鸟先停在这里，真实图片还在林间路上。") {
+      birdImage.removeAttribute("src");
+      birdImage.hidden = true;
+      birdPlaceholder.hidden = false;
+      birdPlaceholder.title = message;
     }
 
     function updateBirdCard(bird) {
-      if (!bird || !bird.ok) return;
+      if (!bird || !bird.ok) {
+        showBirdPlaceholder(bird?.message || "暂时没有找到这只鸟的图片。");
+        if (bird?.bird_name) document.querySelector("#birdTitle").textContent = bird.bird_name;
+        return;
+      }
 
       document.querySelector("#birdTitle").textContent = bird.title || bird.bird_name || "林间来客";
       document.querySelector("#birdSummary").textContent = bird.summary || "这只鸟把故事藏进了树叶里。";
 
-      const image = document.querySelector("#birdImage");
       if (bird.image_url) {
-        image.src = bird.image_url;
-        image.hidden = false;
+        birdImage.src = bird.image_url;
+        birdImage.hidden = false;
+        birdPlaceholder.hidden = true;
       } else {
-        image.removeAttribute("src");
-        image.hidden = true;
+        showBirdPlaceholder("百科里暂时没有图片，先用手绘鸟占位。");
       }
     }
 
     function updateSound(sound) {
-      if (!sound || !sound.ok || !sound.audio_url) return;
+      if (!sound || !sound.ok || !sound.audio_url) {
+        birdAudio.removeAttribute("src");
+        birdAudio.load();
+        soundMeta.textContent = sound?.message || "鸟鸣暂时没有取到，播放器先安静一下。";
+        return;
+      }
 
       birdAudio.src = sound.audio_url;
-      document.querySelector("#soundMeta").textContent =
+      birdAudio.load();
+      soundMeta.textContent =
         `${sound.common_name || sound.bird_name_en || "mystery bird"} · ${sound.country || "unknown forest"}`;
+    }
+
+    async function loadDailyBird() {
+      try {
+        const response = await fetch("/api/daily-bird");
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        updateBirdCard(data.bird);
+        updateSound(data.sound);
+      } catch (error) {
+        showBirdPlaceholder();
+        updateSound({ ok: false, message: `每日一鸟暂时没有飞来：${error.message}` });
+      }
     }
 
     async function loadDiaries() {
@@ -462,6 +879,42 @@
         setStatus(diaryList, "error", "日记本暂时翻不开，请稍后再试。");
       }
     }
+
+    openDiaryModalButton.addEventListener("click", openDiaryModal);
+    closeDiaryModalButton.addEventListener("click", closeDiaryModal);
+
+    prevDiaryButton.addEventListener("click", () => {
+      if (state.diaryPage > 0) {
+        state.diaryPage -= 1;
+        renderDiaryPage();
+      }
+    });
+
+    nextDiaryButton.addEventListener("click", () => {
+      if (state.diaryPage < state.diaries.length - 1) {
+        state.diaryPage += 1;
+        renderDiaryPage();
+      }
+    });
+
+    diaryModal.addEventListener("click", (event) => {
+      if (event.target === diaryModal) closeDiaryModal();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !diaryModal.hidden) closeDiaryModal();
+    });
+
+    diaryImage.addEventListener("change", () => {
+      const file = diaryImage.files?.[0];
+      if (!file) {
+        diaryPreview.removeAttribute("src");
+        diaryPreview.hidden = true;
+        return;
+      }
+      diaryPreview.src = URL.createObjectURL(file);
+      diaryPreview.hidden = false;
+    });
 
     document.querySelector("#chatForm").addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -483,41 +936,48 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message, history }),
         });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) {
+          let detail = `HTTP ${response.status}`;
+          try {
+            const errorData = await response.json();
+            detail = errorData.detail || errorData.message || detail;
+          } catch (error) {
+            // Keep the HTTP status fallback.
+          }
+          throw new Error(detail);
+        }
 
         const data = await response.json();
         renderToolTraces(data.tool_traces || []);
         updateBirdCard(data.bird);
         updateSound(data.sound);
         renderDiaries(data.diaries);
-        addMessage("assistant", data.reply || "林间风声有点轻，我刚刚没听清。");
+        await addAssistantMessageTypewriter(data.reply);
       } catch (error) {
         renderToolTraces([]);
-        addMessage("assistant", "树叶刚刚绕了远路，消息没有送到。请稍后再试一次。");
+        await addAssistantMessageTypewriter(`树叶刚刚绕了远路，消息没有送到：${error.message}`);
       } finally {
         chatButton.disabled = false;
       }
     });
 
-    document.querySelector("#diaryForm").addEventListener("submit", async (event) => {
+    diaryForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       const form = event.currentTarget;
       const diaryButton = form.querySelector("button[type='submit']");
       const formData = new FormData(form);
-      const payload = Object.fromEntries(formData.entries());
       diaryButton.disabled = true;
 
       try {
         const response = await fetch("/api/diary", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: formData,
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const data = await response.json();
-        renderDiaries(data.diaries);
-        form.reset();
+        renderDiaries(data.diaries, true);
+        closeDiaryModal();
       } catch (error) {
         setStatus(diaryList, "error", "这条日记暂时没有写进去，请检查后再试。");
       } finally {
@@ -525,6 +985,7 @@
       }
     });
 
+    loadDailyBird();
     loadDiaries();
     addMessage("assistant", "把问题放在苔藓上吧，我会请一只鸟替你回答。");
   </script>

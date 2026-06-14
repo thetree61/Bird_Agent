@@ -6,5 +6,22 @@
     "description": "它在跳，很可爱",
     "id": "ec7c0eef-2fd7-40a3-a6a0-02a70bafe90e",
     "created_at": "2026-06-14T06:53:34.064060+00:00"
+  },
+  {
+    "bird_name": "麻雀",
+    "spot_time": "中午13；30",
+    "location": "校园树上",
+    "description": "叽叽喳喳",
+    "id": "ab61a1f2-ad11-446d-a906-2362ecdef828",
+    "created_at": "2026-06-14T07:35:59.576828+00:00"
+  },
+  {
+    "bird_name": "白头鹎",
+    "spot_time": "下午16；40",
+    "location": "树梢上",
+    "description": "左右张望",
+    "id": "11e4133c-563d-45b1-a6f1-3042ea66b1da",
+    "created_at": "2026-06-14T08:01:51.493385+00:00",
+    "image_url": "/uploads/fa1c1084ac964adabed1df89c27b083e.jpg"
   }
 ]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import uuid
@@ -8,15 +9,35 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
-from openai.lib._pydantic import to_strict_json_schema
 from openai import AsyncOpenAI
+from openai.lib._pydantic import to_strict_json_schema
 from pydantic import BaseModel, Field
+from starlette.staticfiles import StaticFiles
 
 ROOT = Path(__file__).resolve().parent
 INDEX_PATH = ROOT / "index.html"
 DIARY_PATH = ROOT / "diary.json"
+UPLOAD_DIR = ROOT / "uploads"
+ENV_PATH = ROOT / ".env"
+
+
+def load_dotenv_file() -> None:
+    if not ENV_PATH.exists():
+        return
+    for raw_line in ENV_PATH.read_text(encoding="utf-8-sig").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+load_dotenv_file()
 
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "modelscope").lower()
 MODELSCOPE_BASE_URL = os.getenv("MODELSCOPE_BASE_URL", "https://api-inference.modelscope.cn/v1")
@@ -43,7 +64,17 @@ BIRD_NAME_EN = {
     "\u753b\u7709": "chinese hwamei",
 }
 
+HTTP_HEADERS = {
+    "User-Agent": "Bird_Agent/1.0 (https://localhost; academic-demo)",
+}
+
+COMMONS_SOUND_FILES = {
+    "common cuckoo": "File:Cuculus canorus.ogg",
+}
+
 app = FastAPI(title="Forest Doodle Bird Agent")
+UPLOAD_DIR.mkdir(exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 
 class DiaryEntryIn(BaseModel):
@@ -56,6 +87,7 @@ class DiaryEntryIn(BaseModel):
 class DiaryEntry(DiaryEntryIn):
     id: str
     created_at: str
+    image_url: str | None = None
 
 
 class GetBirdWikiArgs(BaseModel):
@@ -115,7 +147,7 @@ def ensure_diary_file() -> None:
 def read_diary_entries() -> list[dict[str, Any]]:
     ensure_diary_file()
     try:
-        data = json.loads(DIARY_PATH.read_text(encoding="utf-8"))
+        data = json.loads(DIARY_PATH.read_text(encoding="utf-8-sig"))
     except json.JSONDecodeError:
         return []
     return data if isinstance(data, list) else []
@@ -123,7 +155,7 @@ def read_diary_entries() -> list[dict[str, Any]]:
 
 def load_diary_entries_for_write() -> list[dict[str, Any]]:
     ensure_diary_file()
-    raw_diary = DIARY_PATH.read_text(encoding="utf-8")
+    raw_diary = DIARY_PATH.read_text(encoding="utf-8-sig")
     try:
         data = json.loads(raw_diary)
     except json.JSONDecodeError:
@@ -137,11 +169,12 @@ def load_diary_entries_for_write() -> list[dict[str, Any]]:
     return []
 
 
-def write_diary_entry(entry: DiaryEntryIn) -> dict[str, Any]:
+def write_diary_entry(entry: DiaryEntryIn, image_url: str | None = None) -> dict[str, Any]:
     entries = load_diary_entries_for_write()
     saved = DiaryEntry(
         id=str(uuid.uuid4()),
         created_at=datetime.now(timezone.utc).isoformat(),
+        image_url=image_url,
         **entry.model_dump(),
     ).model_dump()
     entries.append(saved)
@@ -168,6 +201,53 @@ def llm_config() -> dict[str, str | None]:
     }
 
 
+def model_extra_body() -> dict[str, Any] | None:
+    if LLM_PROVIDER == "modelscope":
+        return {"enable_thinking": False}
+    return None
+
+
+async def create_chat_completion(
+    client: AsyncOpenAI,
+    config: dict[str, str | None],
+    messages: list[dict[str, Any]],
+    tools: list[dict[str, Any]] | None = None,
+) -> Any:
+    kwargs: dict[str, Any] = {"model": config["model"], "messages": messages}
+    if tools is not None:
+        kwargs["tools"] = tools
+    extra_body = model_extra_body()
+    if extra_body:
+        kwargs["extra_body"] = extra_body
+    return await client.chat.completions.create(**kwargs)
+
+
+async def fallback_plain_reply(
+    client: AsyncOpenAI,
+    config: dict[str, str | None],
+    messages: list[dict[str, Any]],
+) -> str | None:
+    response = await create_chat_completion(client, config, messages)
+    if not response.choices:
+        return None
+    content = response.choices[0].message.content
+    return content.strip() if content else None
+
+
+async def save_uploaded_image(image: UploadFile | None) -> str | None:
+    if image is None or not image.filename:
+        return None
+
+    suffix = Path(image.filename).suffix.lower()
+    if suffix not in {".jpg", ".jpeg", ".png", ".gif", ".webp"}:
+        raise HTTPException(status_code=400, detail="只支持 jpg、png、gif、webp 图片。")
+
+    filename = f"{uuid.uuid4().hex}{suffix}"
+    path = UPLOAD_DIR / filename
+    path.write_bytes(await image.read())
+    return f"/uploads/{filename}"
+
+
 async def get_bird_wiki(bird_name: str) -> dict[str, Any]:
     url = "https://zh.wikipedia.org/w/api.php"
     params = {
@@ -181,7 +261,7 @@ async def get_bird_wiki(bird_name: str) -> dict[str, Any]:
         "titles": bird_name,
     }
     try:
-        async with httpx.AsyncClient(timeout=12.0) as client:
+        async with httpx.AsyncClient(timeout=12.0, headers=HTTP_HEADERS) as client:
             response = await client.get(url, params=params)
             response.raise_for_status()
             pages = response.json().get("query", {}).get("pages", {})
@@ -209,16 +289,84 @@ async def get_bird_wiki(bird_name: str) -> dict[str, Any]:
     }
 
 
+async def get_commons_sound(query_name: str) -> dict[str, Any] | None:
+    file_title = COMMONS_SOUND_FILES.get(query_name.lower())
+    if not file_title:
+        return None
+
+    params = {
+        "action": "query",
+        "format": "json",
+        "prop": "imageinfo",
+        "iiprop": "url",
+        "titles": file_title,
+    }
+    try:
+        async with httpx.AsyncClient(timeout=12.0, headers=HTTP_HEADERS) as client:
+            response = await client.get("https://commons.wikimedia.org/w/api.php", params=params)
+            response.raise_for_status()
+            pages = response.json().get("query", {}).get("pages", {})
+    except Exception as exc:
+        return {"ok": False, "message": f"Wikimedia Commons 也暂时没有传来鸟鸣：{exc}"}
+
+    page = next(iter(pages.values()), {}) if isinstance(pages, dict) else {}
+    image_info = page.get("imageinfo") or []
+    if not image_info:
+        return {"ok": False, "message": "Wikimedia Commons 暂时没有返回这只鸟的音频。"}
+
+    return {
+        "ok": True,
+        "audio_url": image_info[0].get("url"),
+        "source_url": image_info[0].get("descriptionurl"),
+        "provider": "Wikimedia Commons",
+    }
+
+
 async def get_bird_sound(bird_name_en: str) -> dict[str, Any]:
     query_name = BIRD_NAME_EN.get(bird_name_en, bird_name_en)
-    url = "https://xeno-canto.org/api/2/recordings"
-    try:
-        async with httpx.AsyncClient(timeout=12.0) as client:
-            response = await client.get(url, params={"query": query_name})
-            response.raise_for_status()
-            payload = response.json()
-    except Exception as exc:
-        return {"ok": False, "bird_name_en": bird_name_en, "message": f"\u6ca1\u6709\u542c\u89c1\u9e1f\u9e23\uff1a{exc}"}
+    payload = None
+    xeno_key = os.getenv("XENO_CANTO_API_KEY")
+    xeno_error = None
+
+    if xeno_key:
+        try:
+            async with httpx.AsyncClient(timeout=12.0, headers=HTTP_HEADERS) as client:
+                response = await client.get(
+                    "https://xeno-canto.org/api/3/recordings",
+                    params={"query": query_name, "key": xeno_key},
+                )
+                response.raise_for_status()
+                payload = response.json()
+        except Exception as exc:
+            xeno_error = exc
+
+    if payload is None:
+        commons_sound = await get_commons_sound(query_name)
+        if commons_sound and commons_sound.get("ok"):
+            return {
+                "ok": True,
+                "bird_name_en": bird_name_en,
+                "common_name": query_name,
+                "scientific_name": None,
+                "country": "Wikimedia Commons",
+                "recordist": None,
+                "license": "See Wikimedia Commons source page",
+                "audio_url": commons_sound.get("audio_url"),
+                "source_url": commons_sound.get("source_url"),
+                "provider": commons_sound.get("provider"),
+            }
+        commons_message = commons_sound.get("message") if commons_sound else "这只鸟没有配置 Wikimedia Commons 兜底音频。"
+        if xeno_error:
+            return {
+                "ok": False,
+                "bird_name_en": bird_name_en,
+                "message": f"\u6ca1\u6709\u542c\u89c1\u9e1f\u9e23\uff1a{xeno_error}；{commons_message}",
+            }
+        return {
+            "ok": False,
+            "bird_name_en": bird_name_en,
+            "message": f"Xeno-canto API v3 需要 XENO_CANTO_API_KEY；{commons_message}",
+        }
 
     recordings = payload.get("recordings") or []
     if not recordings:
@@ -318,9 +466,33 @@ def api_read_diary() -> dict[str, Any]:
     return {"diaries": read_diary_entries()}
 
 
+@app.get("/api/daily-bird")
+async def api_daily_bird() -> dict[str, Any]:
+    bird, sound = await asyncio.gather(
+        get_bird_wiki("布谷鸟"),
+        get_bird_sound("common cuckoo"),
+    )
+    return {"bird": bird, "sound": sound}
+
+
 @app.post("/api/diary")
-def api_write_diary(entry: DiaryEntryIn) -> dict[str, Any]:
-    saved = write_diary_entry(entry)
+async def api_write_diary(
+    bird_name: str = Form(...),
+    spot_time: str = Form(...),
+    location: str = Form(...),
+    description: str = Form(...),
+    image: UploadFile | None = File(None),
+) -> dict[str, Any]:
+    image_url = await save_uploaded_image(image)
+    saved = write_diary_entry(
+        DiaryEntryIn(
+            bird_name=bird_name,
+            spot_time=spot_time,
+            location=location,
+            description=description,
+        ),
+        image_url=image_url,
+    )
     return {"entry": saved, "diaries": read_diary_entries()}
 
 
@@ -354,13 +526,10 @@ async def api_chat(request: ChatRequest) -> dict[str, Any]:
         if item.role in {"user", "assistant"}:
             messages.append({"role": item.role, "content": item.content})
     messages.append({"role": "user", "content": request.message})
+    plain_messages = [message.copy() for message in messages]
 
     try:
-        response = await client.chat.completions.create(
-            model=config["model"],
-            messages=messages,
-            tools=TOOLS,
-        )
+        response = await create_chat_completion(client, config, messages, tools=TOOLS)
     except Exception:
         return {
             "reply": "林间的水晶球刚刚起雾了，暂时没能连上星光。请稍后再试一次。",
@@ -370,42 +539,54 @@ async def api_chat(request: ChatRequest) -> dict[str, Any]:
             "diaries": read_diary_entries(),
         }
 
-    reply = "林间风声有点轻，我刚刚没听清。"
-    for _ in range(3):
-        message = response.choices[0].message
-        tool_calls = list(message.tool_calls or [])
-        if not tool_calls:
-            reply = message.content or reply
-            break
+    reply = ""
+    try:
+        for _ in range(3):
+            if not response.choices:
+                break
 
-        messages.append(message.model_dump(exclude_none=True))
-        for tool_call in tool_calls:
-            tool_name, args, result = await run_chat_tool_call(tool_call)
-            tool_traces.append(tool_trace_label(tool_name, args, result))
-            if tool_name == "get_bird_wiki":
-                latest_bird = result
-            if tool_name == "get_bird_sound":
-                latest_sound = result
-            if tool_name in {"write_bird_diary", "read_bird_diaries"}:
-                latest_diaries = result.get("diaries")
-            messages.append(
-                {
-                    "role": "tool",
-                    "tool_call_id": tool_call.id,
-                    "content": json.dumps(result, ensure_ascii=False),
-                }
-            )
+            message = response.choices[0].message
+            tool_calls = list(message.tool_calls or [])
+            if not tool_calls:
+                reply = message.content.strip() if message.content else ""
+                break
 
+            messages.append(message.model_dump(exclude_none=True))
+            for tool_call in tool_calls:
+                tool_name, args, result = await run_chat_tool_call(tool_call)
+                tool_traces.append(tool_trace_label(tool_name, args, result))
+                if tool_name == "get_bird_wiki":
+                    latest_bird = result
+                if tool_name == "get_bird_sound":
+                    latest_sound = result
+                if tool_name in {"write_bird_diary", "read_bird_diaries"}:
+                    latest_diaries = result.get("diaries")
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": json.dumps(result, ensure_ascii=False),
+                    }
+                )
+
+            response = await create_chat_completion(client, config, messages, tools=TOOLS)
+    except Exception:
+        return {
+            "reply": "林间的回声刚刚断了一下，但我已经把听见的线索收好了。请稍后再试一次。",
+            "tool_traces": tool_traces,
+            "bird": latest_bird,
+            "sound": latest_sound,
+            "diaries": latest_diaries if latest_diaries is not None else read_diary_entries(),
+        }
+
+    if not reply:
         try:
-            response = await client.chat.completions.create(model=config["model"], messages=messages, tools=TOOLS)
+            reply = await fallback_plain_reply(client, config, plain_messages) or ""
         except Exception:
-            return {
-                "reply": "林间的回声刚刚断了一下，但我已经把听见的线索收好了。请稍后再试一次。",
-                "tool_traces": tool_traces,
-                "bird": latest_bird,
-                "sound": latest_sound,
-                "diaries": latest_diaries if latest_diaries is not None else read_diary_entries(),
-            }
+            reply = ""
+
+    if not reply:
+        reply = "模型接口已经返回，但没有带回可显示的文字。请检查 ModelScope key、模型名，或换一句问题再试。"
 
     return {
         "reply": reply,
