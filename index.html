@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Forest Doodle Bird Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: "FZShouJinShu";
+      src: url("./fonts/FZShouJinShu.woff2") format("woff2");
+      font-display: swap;
+    }
+
+    :root {
+      --paper: #fcfaf2;
+      --forest: #2d4a22;
+      --bark: #7d522e;
+      --autumn: #e0a96d;
+      --ink: #2d3e2d;
+      --soft-leaf: rgba(45, 74, 34, 0.1);
+      --warm-page: rgba(252, 250, 242, 0.88);
+      font-family: "FZShouJinShu", "FangZheng ShouJinShu", "STKaiti", "KaiTi", "Microsoft YaHei", cursive;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "FZShouJinShu", "FangZheng ShouJinShu", "STKaiti", "KaiTi", "Microsoft YaHei", cursive;
+      background:
+        linear-gradient(rgba(45, 74, 34, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(45, 74, 34, 0.035) 1px, transparent 1px),
+        linear-gradient(transparent 31px, rgba(125, 82, 46, 0.08) 32px),
+        var(--paper);
+      background-size: 28px 28px, 28px 28px, 100% 32px, auto;
+      min-width: 0;
+    }
+
+    button,
+    input,
+    textarea,
+    audio,
+    .tool-tag,
+    .eyebrow,
+    .message,
+    .sound-card,
+    #soundMeta,
+    .diary-entry span,
+    .diary-entry time {
+      font-family: "Architects Daughter", "FZShouJinShu", cursive;
+    }
+
+    .page-shell {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.95fr) minmax(360px, 1.05fr);
+      gap: 24px;
+      width: min(1440px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .notebook-panel,
+    .chat-panel {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .doodle-box,
+    button,
+    input,
+    textarea {
+      border: 2.5px solid #2d3e2d;
+      border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+      box-shadow: 4px 5px 0 rgba(45, 62, 45, 0.12);
+    }
+
+    .brand-block {
+      padding: 4px 6px 0;
+    }
+
+    .brand-block h1,
+    .chat-panel h2,
+    .daily-card h2,
+    .diary-card h2,
+    .diary-form h2 {
+      margin: 0 0 8px;
+      color: var(--forest);
+      line-height: 1.18;
+    }
+
+    .brand-block h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+    }
+
+    .eyebrow {
+      margin: 0 0 6px;
+      color: var(--bark);
+      letter-spacing: 0;
+    }
+
+    .daily-card,
+    .sound-card,
+    .diary-card,
+    .diary-form,
+    .chat-panel {
+      background: var(--warm-page);
+      padding: 18px;
+    }
+
+    .daily-card {
+      display: grid;
+      grid-template-columns: 1fr minmax(120px, 210px);
+      gap: 16px;
+      align-items: center;
+    }
+
+    #birdSummary,
+    .diary-entry p,
+    .message {
+      line-height: 1.65;
+    }
+
+    #birdImage {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      border: 2px solid var(--ink);
+      border-radius: 40% 55% 45% 50% / 45% 40% 55% 50%;
+      background: var(--soft-leaf);
+    }
+
+    .sound-card {
+      display: grid;
+      gap: 10px;
+    }
+
+    audio {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .diary-card {
+      min-height: 180px;
+    }
+
+    .diary-list {
+      display: grid;
+      gap: 12px;
+      max-height: 240px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .diary-entry {
+      padding: 12px;
+      background: linear-gradient(transparent 92%, rgba(224, 169, 109, 0.34) 92%);
+      background-size: 100% 28px;
+      border-left: 4px solid var(--autumn);
+    }
+
+    .diary-entry strong,
+    .diary-entry time,
+    .diary-entry span {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+
+    .diary-entry time,
+    .diary-entry span {
+      color: var(--bark);
+    }
+
+    .diary-entry p {
+      margin: 8px 0 0;
+      overflow-wrap: anywhere;
+    }
+
+    .diary-form {
+      display: grid;
+      gap: 10px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 11px 13px;
+      background: rgba(255, 255, 255, 0.56);
+      color: var(--ink);
+      font-size: 1rem;
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    button {
+      cursor: pointer;
+      padding: 11px 16px;
+      background: var(--autumn);
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    button:hover,
+    button:focus-visible {
+      transform: translateY(-1px) rotate(-0.4deg);
+      background: #edbb7d;
+    }
+
+    input:focus,
+    textarea:focus,
+    button:focus-visible {
+      outline: 3px solid rgba(224, 169, 109, 0.48);
+      outline-offset: 2px;
+    }
+
+    .chat-panel {
+      min-height: calc(100vh - 48px);
+    }
+
+    .tool-traces {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 32px;
+    }
+
+    .tool-tag {
+      padding: 6px 10px;
+      background: rgba(224, 169, 109, 0.35);
+      border: 2px dashed var(--bark);
+      border-radius: 18px 12px 20px 10px / 10px 20px 12px 18px;
+    }
+
+    .chat-log {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 340px;
+      overflow: auto;
+      padding: 6px;
+    }
+
+    .message {
+      max-width: 82%;
+      padding: 12px 14px;
+      border: 2px solid var(--ink);
+      background: rgba(255, 255, 255, 0.55);
+      border-radius: 22px 18px 26px 14px / 16px 24px 14px 26px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      background: rgba(45, 74, 34, 0.12);
+    }
+
+    .message.assistant {
+      align-self: flex-start;
+    }
+
+    .chat-form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    .empty,
+    .error {
+      color: var(--bark);
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .error {
+      font-weight: 700;
+    }
+
+    @media (max-width: 860px) {
+      .page-shell {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      .daily-card {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-panel {
+        min-height: 70vh;
+      }
+
+      .chat-form {
+        grid-template-columns: 1fr;
+      }
+
+      .message {
+        max-width: 94%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <section class="notebook-panel">
+      <header class="brand-block">
+        <p class="eyebrow">Forest Doodle Bird Agent</p>
+        <h1>森系涂鸦风鸟类智能体</h1>
+      </header>
+
+      <article class="daily-card doodle-box">
+        <div>
+          <p class="eyebrow">每日一鸟</p>
+          <h2 id="birdTitle">布谷鸟</h2>
+          <p id="birdSummary">不用急，好运在路上。问问林间占卜师，听一声鸟鸣吧。</p>
+        </div>
+        <img id="birdImage" alt="鸟类图片" src="" hidden>
+      </article>
+
+      <div class="sound-card doodle-box">
+        <span id="soundMeta">鸟鸣播放器正在等一阵风。</span>
+        <audio id="birdAudio" controls></audio>
+      </div>
+
+      <section class="diary-card doodle-box">
+        <h2>观鸟日记本</h2>
+        <div id="diaryList" class="diary-list"></div>
+      </section>
+
+      <form id="diaryForm" class="diary-form doodle-box">
+        <h2>记录一次相遇</h2>
+        <input name="bird_name" placeholder="鸟名，例如：白鹭" required>
+        <input name="spot_time" placeholder="时间，例如：清晨 7:30" required>
+        <input name="location" placeholder="地点，例如：校园湖边" required>
+        <textarea name="description" placeholder="它在做什么？你当时感觉如何？" required></textarea>
+        <button type="submit">写进手帐</button>
+      </form>
+    </section>
+
+    <section class="chat-panel doodle-box">
+      <header>
+        <p class="eyebrow">林间对话框</p>
+        <h2>林间魔法占卜师</h2>
+      </header>
+      <div id="toolTraces" class="tool-traces"></div>
+      <div id="chatLog" class="chat-log"></div>
+      <form id="chatForm" class="chat-form">
+        <input id="chatInput" placeholder="试试：给我做一次布谷鸟占卜" autocomplete="off" required>
+        <button type="submit">送进森林</button>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      history: [],
+      diaries: [],
+    };
+
+    const chatLog = document.querySelector("#chatLog");
+    const toolTraces = document.querySelector("#toolTraces");
+    const diaryList = document.querySelector("#diaryList");
+    const birdAudio = document.querySelector("#birdAudio");
+
+    function setStatus(container, className, message) {
+      container.textContent = "";
+      const note = document.createElement("p");
+      note.className = className;
+      note.textContent = message;
+      container.appendChild(note);
+    }
+
+    function addMessage(role, content) {
+      state.history.push({ role, content });
+      const bubble = document.createElement("div");
+      bubble.className = `message ${role}`;
+      bubble.textContent = content;
+      chatLog.appendChild(bubble);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function renderToolTraces(labels) {
+      toolTraces.textContent = "";
+      (labels || []).forEach((label) => {
+        const tag = document.createElement("span");
+        tag.className = "tool-tag";
+        tag.textContent = label;
+        toolTraces.appendChild(tag);
+      });
+    }
+
+    function renderDiaries(diaries) {
+      state.diaries = Array.isArray(diaries) ? diaries : [];
+      diaryList.textContent = "";
+
+      if (!state.diaries.length) {
+        setStatus(diaryList, "empty", "今天还没有鸟儿落在纸页上。");
+        return;
+      }
+
+      state.diaries.slice().reverse().forEach((entry) => {
+        const card = document.createElement("article");
+        card.className = "diary-entry";
+
+        const birdName = document.createElement("strong");
+        birdName.textContent = entry.bird_name || "未命名的鸟";
+
+        const meta = document.createElement("time");
+        meta.textContent = `${entry.spot_time || "未知时间"} · ${entry.location || "未知地点"}`;
+
+        const description = document.createElement("p");
+        description.textContent = entry.description || "这次相遇还没有描述。";
+
+        card.append(birdName, meta, description);
+        diaryList.appendChild(card);
+      });
+    }
+
+    function updateBirdCard(bird) {
+      if (!bird || !bird.ok) return;
+
+      document.querySelector("#birdTitle").textContent = bird.title || bird.bird_name || "林间来客";
+      document.querySelector("#birdSummary").textContent = bird.summary || "这只鸟把故事藏进了树叶里。";
+
+      const image = document.querySelector("#birdImage");
+      if (bird.image_url) {
+        image.src = bird.image_url;
+        image.hidden = false;
+      } else {
+        image.removeAttribute("src");
+        image.hidden = true;
+      }
+    }
+
+    function updateSound(sound) {
+      if (!sound || !sound.ok || !sound.audio_url) return;
+
+      birdAudio.src = sound.audio_url;
+      document.querySelector("#soundMeta").textContent =
+        `${sound.common_name || sound.bird_name_en || "mystery bird"} · ${sound.country || "unknown forest"}`;
+    }
+
+    async function loadDiaries() {
+      try {
+        const response = await fetch("/api/diary");
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        renderDiaries(data.diaries);
+      } catch (error) {
+        setStatus(diaryList, "error", "日记本暂时翻不开，请稍后再试。");
+      }
+    }
+
+    document.querySelector("#chatForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const chatButton = form.querySelector("button[type='submit']");
+      const input = document.querySelector("#chatInput");
+      const message = input.value.trim();
+      if (!message) return;
+
+      const history = state.history.slice(-8);
+      input.value = "";
+      addMessage("user", message);
+      renderToolTraces(["树叶正在传话..."]);
+      chatButton.disabled = true;
+
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message, history }),
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        renderToolTraces(data.tool_traces || []);
+        updateBirdCard(data.bird);
+        updateSound(data.sound);
+        renderDiaries(data.diaries);
+        addMessage("assistant", data.reply || "林间风声有点轻，我刚刚没听清。");
+      } catch (error) {
+        renderToolTraces([]);
+        addMessage("assistant", "树叶刚刚绕了远路，消息没有送到。请稍后再试一次。");
+      } finally {
+        chatButton.disabled = false;
+      }
+    });
+
+    document.querySelector("#diaryForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const diaryButton = form.querySelector("button[type='submit']");
+      const formData = new FormData(form);
+      const payload = Object.fromEntries(formData.entries());
+      diaryButton.disabled = true;
+
+      try {
+        const response = await fetch("/api/diary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        renderDiaries(data.diaries);
+        form.reset();
+      } catch (error) {
+        setStatus(diaryList, "error", "这条日记暂时没有写进去，请检查后再试。");
+      } finally {
+        diaryButton.disabled = false;
+      }
+    });
+
+    loadDiaries();
+    addMessage("assistant", "把问题放在苔藓上吧，我会请一只鸟替你回答。");
+  </script>
+</body>
+</html>
