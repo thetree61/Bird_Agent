@@ -4,3 +4,4 @@ docs/
 server.log
 uvicorn.err.log
 uvicorn.out.log
+uploads/
